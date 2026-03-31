@@ -1,0 +1,28 @@
+{
+  "name": "codebuddy-worker",
+  "version": "1.0.0",
+  "description": "CodeBuddy API proxy on Cloudflare Workers",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "tail": "wrangler tail"
+  },
+  "keywords": [
+    "cloudflare",
+    "workers",
+    "codebuddy",
+    "openai",
+    "api-proxy"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "hono": "^4.0.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240000.0",
+    "wrangler": "^3.0.0",
+    "typescript": "^5.0.0"
+  }
+}

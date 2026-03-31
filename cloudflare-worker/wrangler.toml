@@ -1,0 +1,26 @@
+name = "codebuddy-worker"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+# 自定义域名路由
+# 注意：需要先在 Cloudflare Dashboard 中将域名添加到你的账户
+# routes = [
+#   { pattern = "cbapi.hongecb.store/*", zone_name = "hongecb.store" }
+# ]
+
+# KV 命名空间绑定
+[[kv_namespaces]]
+binding = "CREDENTIALS_KV"
+id = "17788b064bd4411c99333f7976d55fbe"
+
+# 环境变量
+[vars]
+WEB_PASSWORD = "admin123cb"
+API_KEY = "sk-U8FtQmChp-api-key"
+CODEBUDDY_API_ENDPOINT = "https://www.codebuddy.ai"
+ROTATION_COUNT = "1"
+MODELS = "auto-chat,gpt-5,gpt-5-mini,gpt-5-nano,o4-mini,gemini-2.5-flash,gemini-2.5-pro,gemini-3.0-pro,gemini-3.0-flash,glm-5.0,glm-4.6,kimi-k2.5,deepseek-v3.2"
+
+# 如果需要更安全的方式存储密码，可以使用 secrets（推荐）
+# 使用命令：wrangler secret put WEB_PASSWORD
+# 使用命令：wrangler secret put API_KEY

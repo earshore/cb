@@ -1477,7 +1477,9 @@
                     <div class="form-group">
                         <label class="form-label" for="testModel">模型</label>
                         <select id="testModel" class="form-input">
-                            <option value="">加载中...</option>
+                            <option value="auto-chat">auto-chat</option>
+                            <option value="claude-4.0">claude-4.0</option>
+                            <option value="gpt-5">gpt-5</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -1559,48 +1561,6 @@
                         </button>
                         <small style="display: block; margin-top: 1rem; color: var(--secondary-color);">
                             注意：部分设置（如端口号）需要重启服务后才能生效。
-                        </small>
-                    </div>
-                </div>
-
-                <!-- 密码管理 -->
-                <div class="card">
-                    <div class="card-header">
-                        <h3 class="card-title">安全设置</h3>
-                    </div>
-
-                    <!-- 修改 Web 密码 -->
-                    <div style="margin-bottom: 2rem;">
-                        <h4 style="margin-bottom: 1rem; color: var(--primary-color);">修改 Web 管理密码</h4>
-                        <div class="form-group">
-                            <label class="form-label" for="currentPassword">当前密码</label>
-                            <input type="password" id="currentPassword" class="form-input" placeholder="输入当前密码">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" for="newPassword">新密码</label>
-                            <input type="password" id="newPassword" class="form-input" placeholder="输入新密码（至少6位）">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" for="confirmPassword">确认新密码</label>
-                            <input type="password" id="confirmPassword" class="form-input" placeholder="再次输入新密码">
-                        </div>
-                        <button class="btn btn-primary" onclick="changePassword()">
-                            <i class="fas fa-key"></i> 修改密码
-                        </button>
-                    </div>
-
-                    <!-- 修改 API Key -->
-                    <div>
-                        <h4 style="margin-bottom: 1rem; color: var(--primary-color);">修改 API Key</h4>
-                        <div class="form-group">
-                            <label class="form-label" for="newApiKey">新 API Key</label>
-                            <input type="text" id="newApiKey" class="form-input" placeholder="输入新的 API Key（格式：sk-xxx）">
-                        </div>
-                        <button class="btn btn-primary" onclick="changeApiKey()">
-                            <i class="fas fa-key"></i> 修改 API Key
-                        </button>
-                        <small style="display: block; margin-top: 1rem; color: var(--secondary-color);">
-                            注意：修改后需要使用新的 API Key 进行 API 调用。
                         </small>
                     </div>
                 </div>
@@ -1784,32 +1744,23 @@
             document.querySelectorAll('.tab-panel').forEach(panel => {
                 panel.classList.remove('active');
             });
-
+            
             // 移除所有标签的激活状态
             document.querySelectorAll('.nav-tab').forEach(tab => {
                 tab.classList.remove('active');
             });
-
+            
             // 显示目标面板
-            const targetPanel = document.getElementById(tabId);
-            if (targetPanel) {
-                targetPanel.classList.add('active');
-            }
-
-            // 激活对应标签按钮
-            document.querySelectorAll('.nav-tab').forEach(tab => {
-                if (tab.getAttribute('onclick') && tab.getAttribute('onclick').includes(tabId)) {
-                    tab.classList.add('active');
-                }
-            });
-
+            document.getElementById(tabId).classList.add('active');
+            
+            // 激活对应标签
+            event.target.classList.add('active');
+            
             // 加载对应数据
             if (tabId === 'dashboard') {
                 loadDashboard();
             } else if (tabId === 'credentials') {
                 loadCredentials();
-            } else if (tabId === 'api-test') {
-                loadModels();
             } else if (tabId === 'settings') {
                 loadSettings();
             }
@@ -1872,11 +1823,11 @@
                     headers: { 'Authorization': `Bearer ${password}` }
                 });
 
-                if (testResponse.ok) {
+                if (testResponse.status !== 403) {
                     servicePassword = password;
                     isAuthenticated = true;
                     sessionStorage.setItem('servicePassword', password);
-
+                    
                     showDashboardPage();
                     loadDashboard();
                     showNotification('登录成功！', 'success');
@@ -1934,57 +1885,47 @@
 
             // 加载凭证统计
             try {
-                const credResponse = await fetch('/codebuddy/v1/credentials', {
-                    headers: getAuthHeaders()
+                const credResponse = await fetch('/codebuddy/v1/credentials', { 
+                    headers: getAuthHeaders() 
                 });
                 if (credResponse.ok) {
                     const credData = await credResponse.json();
                     const credentials = credData.credentials || [];
                     const credCount = credentials.length;
                     const validCreds = credentials.filter(c => !c.is_expired).length;
-
-                    const totalCredsEl = document.getElementById('totalCredentials');
-                    const validCredsEl = document.getElementById('validCredentials');
-
-                    if (totalCredsEl) totalCredsEl.textContent = credCount;
-                    if (validCredsEl) validCredsEl.textContent = validCreds;
-
+                    
+                    document.getElementById('totalCredentials').textContent = credCount;
+                    document.getElementById('validCredentials').textContent = validCreds;
+                    
                     // 更新凭证使用率环形图
-                    updateUsageRing('credentialRingProgress', 'credentialUsagePercent',
+                    updateUsageRing('credentialRingProgress', 'credentialUsagePercent', 
                                   validCreds, credCount, `${validCreds}/${credCount}`);
-
+                    
                     // 更新趋势指示
                     const credTrend = document.getElementById('credentialTrend');
-                    if (credTrend) {
-                        if (validCreds === credCount) {
-                            credTrend.className = 'stat-trend positive';
-                            credTrend.innerHTML = '<i class="fas fa-check"></i> 全部有效';
-                        } else if (validCreds === 0) {
-                            credTrend.className = 'stat-trend negative';
-                            credTrend.innerHTML = '<i class="fas fa-exclamation-triangle"></i> 无有效凭证';
-                        } else {
-                            credTrend.className = 'stat-trend';
-                            credTrend.innerHTML = `<i class="fas fa-info-circle"></i> ${validCreds}个有效`;
-                        }
+                    if (validCreds === credCount) {
+                        credTrend.className = 'stat-trend positive';
+                        credTrend.innerHTML = '<i class="fas fa-check"></i> 全部有效';
+                    } else if (validCreds === 0) {
+                        credTrend.className = 'stat-trend negative';
+                        credTrend.innerHTML = '<i class="fas fa-exclamation-triangle"></i> 无有效凭证';
+                    } else {
+                        credTrend.className = 'stat-trend';
+                        credTrend.innerHTML = `<i class="fas fa-info-circle"></i> ${validCreds}个有效`;
                     }
                 } else {
-                    const totalCredsEl = document.getElementById('totalCredentials');
-                    const validCredsEl = document.getElementById('validCredentials');
-                    if (totalCredsEl) totalCredsEl.textContent = 'N/A';
-                    if (validCredsEl) validCredsEl.textContent = '0';
+                    document.getElementById('totalCredentials').textContent = 'N/A';
+                    document.getElementById('validCredentials').textContent = '0';
                 }
             } catch (error) {
                 console.error('Failed to load credentials count:', error);
-                const totalCredsEl = document.getElementById('totalCredentials');
-                const validCredsEl = document.getElementById('validCredentials');
-                if (totalCredsEl) totalCredsEl.textContent = '错误';
-                if (validCredsEl) validCredsEl.textContent = '0';
+                document.getElementById('totalCredentials').textContent = '错误';
+                document.getElementById('validCredentials').textContent = '0';
             }
 
             // 设置API端点
             const apiEndpoint = window.location.origin + '/codebuddy/v1';
-            const apiEndpointEl = document.getElementById('apiEndpoint');
-            if (apiEndpointEl) apiEndpointEl.textContent = apiEndpoint;
+            document.getElementById('apiEndpoint').textContent = apiEndpoint;
 
             // 加载使用统计
             try {
@@ -2003,19 +1944,15 @@
 
         function updateServiceStatusCard(status) {
             const statusIcon = document.getElementById('serviceStatusIcon');
-            if (statusIcon) {
-                statusIcon.className = 'stat-card-icon ' + status;
-            }
-
+            statusIcon.className = 'stat-card-icon ' + status;
+            
             // 更新运行时长（模拟）
             const uptime = document.getElementById('uptime');
-            if (uptime) {
-                const startTime = sessionStorage.getItem('serviceStartTime') || Date.now();
-                const duration = Date.now() - startTime;
-                const hours = Math.floor(duration / (1000 * 60 * 60));
-                const minutes = Math.floor((duration % (1000 * 60 * 60)) / (1000 * 60));
-                uptime.textContent = `${hours}h ${minutes}m`;
-            }
+            const startTime = sessionStorage.getItem('serviceStartTime') || Date.now();
+            const duration = Date.now() - startTime;
+            const hours = Math.floor(duration / (1000 * 60 * 60));
+            const minutes = Math.floor((duration % (1000 * 60 * 60)) / (1000 * 60));
+            uptime.textContent = `${hours}h ${minutes}m`;
         }
 
         function updateUsageRing(progressId, textId, current, total, displayText) {
@@ -2034,22 +1971,19 @@
         }
 
         function updateDashboardStats(statsData) {
-            const { model_usage, credential_usage } = statsData || {};
-
+            const { model_usage, credential_usage } = statsData;
+            
             // 计算总API调用次数
             let totalCalls = 0;
             if (model_usage) {
                 totalCalls = Object.values(model_usage).reduce((sum, count) => sum + count, 0);
             }
-
-            const totalApiCallsEl = document.getElementById('totalApiCalls');
-            if (totalApiCallsEl) {
-                totalApiCallsEl.textContent = totalCalls.toLocaleString();
-            }
-
+            
+            document.getElementById('totalApiCalls').textContent = totalCalls.toLocaleString();
+            
             // 更新使用率环形图（基于今日调用次数的目标）
             const dailyTarget = 1000; // 假设日目标1000次
-            updateUsageRing('usageRingProgress', 'totalUsagePercent',
+            updateUsageRing('usageRingProgress', 'totalUsagePercent', 
                           totalCalls % dailyTarget, dailyTarget, totalCalls.toString());
         }
 
@@ -2585,44 +2519,36 @@
 
         async function testCredential(index) {
             showNotification(`正在测试凭证 #${index + 1}...`, 'info');
-
+            
             // 找到要测试的凭证的原始数据
             const originalCred = credentialsCache[index];
-            if (!originalCred) {
-                showNotification('凭证不存在', 'error');
-                return;
-            }
+            if (!originalCred) return;
 
             try {
-                const response = await fetch('/codebuddy/v1/credentials/validate', {
+                const response = await fetch('/codebuddy/v1/chat/completions', {
                     method: 'POST',
                     headers: getAuthHeaders(),
-                    body: JSON.stringify({ index })
+                    body: JSON.stringify({
+                        // 在后端，token管理器是轮换的，我们无法直接指定用哪个token
+                        // 所以这里的测试实际上是测试下一个将被轮换到的token
+                        // 为了更精确，理想的后端应该有一个专门的测试接口
+                        // 但在当前架构下，这是最好的模拟
+                        model: 'claude-4.0',
+                        messages: [{ role: 'user', content: 'test' }],
+                        max_tokens: 1
+                    })
                 });
-
-                const result = await response.json();
-
-                if (result.valid) {
+                
+                if (response.ok) {
                     showNotification(`凭证 #${index + 1} 测试成功！ ✓`, 'success');
                     credentialsCache[index].status = 'valid';
                 } else {
-                    // 显示详细错误信息
-                    const errorMsg = result.details || result.error || '未知错误';
-
-                    if (result.error && result.error.includes('expired')) {
-                        showNotification(`凭证 #${index + 1} 已过期 ✗ - ${errorMsg}`, 'error');
-                    } else if (result.status === 401) {
-                        showNotification(`凭证 #${index + 1} 认证失败 ✗ - ${errorMsg}`, 'error');
-                    } else if (result.status === 500 || result.status === 502) {
-                        showNotification(`后端服务错误 (${result.status}) - ${errorMsg}`, 'error');
-                    } else {
-                        showNotification(`凭证 #${index + 1} 测试失败 ✗ - ${errorMsg}`, 'error');
-                    }
+                     showNotification(`凭证 #${index + 1} 无效或已过期 ✗`, 'error');
                     credentialsCache[index].status = 'invalid';
                 }
             } catch (error) {
                 showNotification(`网络错误: ${error.message}`, 'error');
-                credentialsCache[index].status = 'unknown';
+                credentialsCache[index].status = 'invalid';
             } finally {
                 // 重新渲染列表以更新图标
                 displayCredentials();
@@ -2630,33 +2556,6 @@
         }
 
         // API测试功能
-        async function loadModels() {
-            const modelSelect = document.getElementById('testModel');
-            if (!modelSelect) return;
-
-            try {
-                const response = await fetch('/v1/models', { headers: getAuthHeaders() });
-                if (response.ok) {
-                    const data = await response.json();
-                    modelSelect.innerHTML = '';
-
-                    if (data.data && Array.isArray(data.data)) {
-                        data.data.forEach(model => {
-                            const option = document.createElement('option');
-                            option.value = model.id;
-                            option.textContent = model.id;
-                            modelSelect.appendChild(option);
-                        });
-                    }
-                } else {
-                    modelSelect.innerHTML = '<option value="auto-chat">auto-chat</option>';
-                }
-            } catch (error) {
-                console.error('Failed to load models:', error);
-                modelSelect.innerHTML = '<option value="auto-chat">auto-chat</option>';
-            }
-        }
-
         async function testAPI() {
             const model = document.getElementById('testModel').value;
             const message = document.getElementById('testMessage').value;
@@ -3133,111 +3032,19 @@
                 const result = await response.json();
 
                 if (response.ok) {
-                    showNotification('设置保存成功！', 'success');
+                    showNotification(result.message || '设置已保存并热加载！', 'success');
                 } else {
-                    showNotification(result.message || result.note || '保存失败', 'warning');
+                    throw new Error(result.detail || '保存失败');
                 }
             } catch (error) {
                 showNotification(`保存失败: ${error.message}`, 'error');
             }
         }
 
-        // 修改密码
-        async function changePassword() {
-            const currentPassword = document.getElementById('currentPassword').value;
-            const newPassword = document.getElementById('newPassword').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
-
-            if (!currentPassword || !newPassword || !confirmPassword) {
-                showNotification('请填写所有密码字段', 'error');
-                return;
-            }
-
-            if (newPassword.length < 6) {
-                showNotification('新密码至少需要6位', 'error');
-                return;
-            }
-
-            if (newPassword !== confirmPassword) {
-                showNotification('两次输入的新密码不一致', 'error');
-                return;
-            }
-
-            showNotification('正在修改密码...', 'info');
-
-            try {
-                const response = await fetch('/api/change-password', {
-                    method: 'POST',
-                    headers: getAuthHeaders(),
-                    body: JSON.stringify({
-                        current_password: currentPassword,
-                        new_password: newPassword
-                    })
-                });
-
-                const result = await response.json();
-
-                if (response.ok) {
-                    showNotification('密码修改成功！请使用新密码重新登录', 'success');
-                    // 清空表单
-                    document.getElementById('currentPassword').value = '';
-                    document.getElementById('newPassword').value = '';
-                    document.getElementById('confirmPassword').value = '';
-                    // 3秒后自动登出
-                    setTimeout(() => {
-                        logout();
-                    }, 3000);
-                } else {
-                    showNotification(result.error?.message || '密码修改失败', 'error');
-                }
-            } catch (error) {
-                showNotification(`修改失败: ${error.message}`, 'error');
-            }
-        }
-
-        // 修改 API Key
-        async function changeApiKey() {
-            const newApiKey = document.getElementById('newApiKey').value;
-
-            if (!newApiKey) {
-                showNotification('请输入新的 API Key', 'error');
-                return;
-            }
-
-            if (!newApiKey.startsWith('sk-') || newApiKey.length < 10) {
-                showNotification('API Key 格式不正确（必须以 sk- 开头且至少10位）', 'error');
-                return;
-            }
-
-            showNotification('正在修改 API Key...', 'info');
-
-            try {
-                const response = await fetch('/api/change-api-key', {
-                    method: 'POST',
-                    headers: getAuthHeaders(),
-                    body: JSON.stringify({ new_api_key: newApiKey })
-                });
-
-                const result = await response.json();
-
-                if (response.ok) {
-                    showNotification('API Key 修改成功！', 'success');
-                    // 清空表单
-                    document.getElementById('newApiKey').value = '';
-                } else {
-                    showNotification(result.error?.message || 'API Key 修改失败', 'error');
-                }
-            } catch (error) {
-                showNotification(`修改失败: ${error.message}`, 'error');
-            }
-        }
-
        function updateUsageTables(stats) {
-           const { model_usage, credential_usage } = stats || {};
+           const { model_usage, credential_usage } = stats;
            const modelTableBody = document.getElementById('modelUsageTableBody');
            const credentialTableBody = document.getElementById('credentialUsageTableBody');
-
-           if (!modelTableBody || !credentialTableBody) return;
 
            // Clear previous data
            modelTableBody.innerHTML = '';
