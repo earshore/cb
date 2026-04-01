@@ -4,14 +4,14 @@
 
 你的 CodeBuddy Worker 已成功部署到 Cloudflare，可以通过以下地址访问：
 
-**Worker 域名**: https://codebuddy-worker.iclaw.workers.dev
+**Worker 域名**: https://your-worker.workers.dev
 
 ## 📝 第一步：添加 CodeBuddy 凭证
 
 ### 方法 1：通过命令行（推荐）
 
 ```bash
-cd "D:\Users\Administrator\Documents\GitHub\cb\cloudflare-worker"
+cd cloudflare-worker
 
 # 添加凭证（替换为你的实际 Token 和用户 ID）
 npx wrangler kv key put --binding=CREDENTIALS_KV "cred:user1_$(date +%s)" '{
@@ -25,8 +25,8 @@ npx wrangler kv key put --binding=CREDENTIALS_KV "cred:user1_$(date +%s)" '{
 ### 方法 2：通过 API
 
 ```bash
-curl -X POST "https://codebuddy-worker.iclaw.workers.dev/v1/credentials" \
-  -H "Authorization: Bearer admin123cb" \
+curl -X POST "https://your-worker.workers.dev/v1/credentials" \
+  -H "Authorization: Bearer your-web-password" \
   -H "Content-Type: application/json" \
   -d '{
     "bearer_token": "你的CodeBuddy_Token",
@@ -42,8 +42,8 @@ curl -X POST "https://codebuddy-worker.iclaw.workers.dev/v1/credentials" \
 
 ```bash
 # 非流式请求
-curl -X POST "https://codebuddy-worker.iclaw.workers.dev/v1/chat/completions" \
-  -H "Authorization: Bearer sk-U8FtQmChp-api-key" \
+curl -X POST "https://your-worker.workers.dev/v1/chat/completions" \
+  -H "Authorization: Bearer your-api-key" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "auto-chat",
@@ -51,8 +51,8 @@ curl -X POST "https://codebuddy-worker.iclaw.workers.dev/v1/chat/completions" \
   }'
 
 # 流式请求
-curl -X POST "https://codebuddy-worker.iclaw.workers.dev/v1/chat/completions" \
-  -H "Authorization: Bearer sk-U8FtQmChp-api-key" \
+curl -X POST "https://your-worker.workers.dev/v1/chat/completions" \
+  -H "Authorization: Bearer your-api-key" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "auto-chat",
@@ -67,8 +67,8 @@ curl -X POST "https://codebuddy-worker.iclaw.workers.dev/v1/chat/completions" \
 import openai
 
 client = openai.OpenAI(
-    api_key="sk-U8FtQmChp-api-key",
-    base_url="https://codebuddy-worker.iclaw.workers.dev/v1"
+    api_key="your-api-key",
+    base_url="https://your-worker.workers.dev/v1"
 )
 
 # 非流式
@@ -92,34 +92,33 @@ for chunk in stream:
     if chunk.choices[0].delta.content:
         print(chunk.choices[0].delta.content, end="")
 ```
-```
 
 ## 🔑 认证信息
 
-- **Web 管理界面密码**: `admin123cb`
-- **API 调用密钥**: `sk-U8FtQmChp-api-key`
+- **Web 管理界面密码**: 在部署时通过 `wrangler secret put WEB_PASSWORD` 设置
+- **API 调用密钥**: 在部署时通过 `wrangler secret put API_KEY` 设置
 
 ## 📊 管理功能
 
 ### 查看所有凭证
 
 ```bash
-curl "https://codebuddy-worker.iclaw.workers.dev/v1/credentials" \
-  -H "Authorization: Bearer admin123cb"
+curl "https://your-worker.workers.dev/v1/credentials" \
+  -H "Authorization: Bearer your-web-password"
 ```
 
 ### 查看当前使用的凭证
 
 ```bash
-curl "https://codebuddy-worker.iclaw.workers.dev/v1/credentials/current" \
-  -H "Authorization: Bearer admin123cb"
+curl "https://your-worker.workers.dev/v1/credentials/current" \
+  -H "Authorization: Bearer your-web-password"
 ```
 
 ### 删除凭证
 
 ```bash
-curl -X POST "https://codebuddy-worker.iclaw.workers.dev/v1/credentials/delete" \
-  -H "Authorization: Bearer admin123cb" \
+curl -X POST "https://your-worker.workers.dev/v1/credentials/delete" \
+  -H "Authorization: Bearer your-web-password" \
   -H "Content-Type: application/json" \
   -d '{"index": 0}'
 ```
@@ -127,15 +126,15 @@ curl -X POST "https://codebuddy-worker.iclaw.workers.dev/v1/credentials/delete" 
 ### 切换自动轮换
 
 ```bash
-curl -X POST "https://codebuddy-worker.iclaw.workers.dev/v1/credentials/toggle-rotation" \
-  -H "Authorization: Bearer admin123cb"
+curl -X POST "https://your-worker.workers.dev/v1/credentials/toggle-rotation" \
+  -H "Authorization: Bearer your-web-password"
 ```
 
 ## 🔧 常用命令
 
 ```bash
 # 进入项目目录
-cd "D:\Users\Administrator\Documents\GitHub\cb\cloudflare-worker"
+cd cloudflare-worker
 
 # 查看实时日志
 npx wrangler tail
@@ -164,7 +163,7 @@ npx wrangler kv key get --binding=CREDENTIALS_KV "rotation_state"
 
 1. 查看实时日志：`npx wrangler tail`
 2. 检查凭证是否过期：访问 Web 管理界面
-3. 确认 API key 是否正确：`sk-U8FtQmChp-api-key`
+3. 确认 API key 是否正确
 4. 查看完整文档：`cloudflare-worker/README.md`
 
 ---

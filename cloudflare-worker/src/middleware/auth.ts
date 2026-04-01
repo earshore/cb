@@ -3,14 +3,14 @@ import type { Env } from '../types'
 
 /**
  * Web 界面认证中间件
- * 验证 Authorization header 是否为 "Bearer admin123cb"
+ * 验证 Authorization header 是否为 "Bearer <WEB_PASSWORD>"
  */
 export async function webAuth(c: Context<{ Bindings: Env }>, next: () => Promise<void>) {
   const auth = c.req.header('Authorization')
 
   // 优先从 KV 读取密码，如果不存在则使用环境变量
   const storedPassword = await c.env.CREDENTIALS_KV.get('config:web_password')
-  const expectedPassword = storedPassword || c.env?.WEB_PASSWORD || 'admin123cb'
+  const expectedPassword = storedPassword || c.env?.WEB_PASSWORD || 'change-me-in-production'
 
   if (!auth || auth !== `Bearer ${expectedPassword}`) {
     return c.json({
@@ -27,14 +27,14 @@ export async function webAuth(c: Context<{ Bindings: Env }>, next: () => Promise
 
 /**
  * API 认证中间件
- * 验证 Authorization header 是否为 "Bearer sk-U8FtQmChp-api-key"
+ * 验证 Authorization header 是否为 "Bearer <API_KEY>"
  */
 export async function apiAuth(c: Context<{ Bindings: Env }>, next: () => Promise<void>) {
   const auth = c.req.header('Authorization')
 
   // 优先从 KV 读取 API Key，如果不存在则使用环境变量
   const storedApiKey = await c.env.CREDENTIALS_KV.get('config:api_key')
-  const expectedKey = storedApiKey || c.env?.API_KEY || 'sk-U8FtQmChp-api-key'
+  const expectedKey = storedApiKey || c.env?.API_KEY || 'sk-change-me-in-production'
 
   console.log('API Auth - Received:', auth ? 'Bearer ***' : 'none')
   console.log('API Auth - Expected:', expectedKey ? 'Bearer ***' : 'none')
@@ -73,8 +73,8 @@ export async function authenticate(c: Context<{ Bindings: Env }>, next: () => Pr
     const storedPassword = await c.env.CREDENTIALS_KV.get('config:web_password').catch(() => null)
     const storedApiKey = await c.env.CREDENTIALS_KV.get('config:api_key').catch(() => null)
 
-    const expectedWebPassword = storedPassword || c.env?.WEB_PASSWORD || 'admin123cb'
-    const expectedApiKey = storedApiKey || c.env?.API_KEY || 'sk-U8FtQmChp-api-key'
+    const expectedWebPassword = storedPassword || c.env?.WEB_PASSWORD || 'change-me-in-production'
+    const expectedApiKey = storedApiKey || c.env?.API_KEY || 'sk-change-me-in-production'
 
     // 检查是否是有效的 Web 密码或 API key
     const isValidWebPassword = auth === `Bearer ${expectedWebPassword}`

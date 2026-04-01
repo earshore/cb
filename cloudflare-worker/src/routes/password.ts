@@ -32,7 +32,7 @@ export async function changePassword(c: Context<{ Bindings: Env }>) {
 
     // 从 KV 读取当前密码（如果存在）
     const storedPassword = await c.env.CREDENTIALS_KV.get('config:web_password')
-    const currentPassword = storedPassword || c.env.WEB_PASSWORD || 'admin123cb'
+    const currentPassword = storedPassword || c.env.WEB_PASSWORD || 'change-me-in-production'
 
     // 验证当前密码
     if (current_password !== currentPassword) {
@@ -133,7 +133,7 @@ export async function listApiKeys(c: Context<{ Bindings: Env }>) {
     }
 
     // 总是返回默认key
-    const defaultKey = c.env.API_KEY || 'sk-U8FtQmChp-api-key'
+    const defaultKey = c.env.API_KEY || 'sk-change-me-in-production'
     keys.unshift({
       id: 'default',
       key: defaultKey,

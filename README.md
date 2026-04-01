@@ -55,7 +55,7 @@ cp .env.example .env
 
 ```dotenv
 # (必需) API服务的访问密码，客户端连接时需要提供此密码
-CODEBUDDY_PASSWORD=your_secret_password_for_this_service
+CODEBUDDY_PASSWORD=your_secure_password_here
 ```
 
 ### 4. 添加 CodeBuddy 认证凭证
@@ -96,7 +96,7 @@ python web.py
 
 所有对本服务的 API 请求，都需要在 HTTP 请求头中包含你在 `.env` 文件里设置的 `CODEBUDDY_PASSWORD` 作为 Bearer Token。
 
-`Authorization: Bearer your_secret_password_for_this_service`
+`Authorization: Bearer your_secure_password_here`
 
 ### 客户端集成示例
 
@@ -107,7 +107,7 @@ python web.py
 import openai
 
 client = openai.OpenAI(
-    api_key="your_secret_password_for_this_service",
+    api_key="your_secure_password_here",
     base_url="http://127.0.0.1:8001/codebuddy/v1"
 )
 
@@ -137,7 +137,7 @@ for chunk in stream:
 ```bash
 # 非流式请求
 curl -X POST "http://127.0.0.1:8001/codebuddy/v1/chat/completions" \
-  -H "Authorization: Bearer your_secret_password_for_this_service" \
+  -H "Authorization: Bearer your_secure_password_here" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "auto-chat",
@@ -148,7 +148,7 @@ curl -X POST "http://127.0.0.1:8001/codebuddy/v1/chat/completions" \
 
 # 流式请求
 curl -X POST "http://127.0.0.1:8001/codebuddy/v1/chat/completions" \
-  -H "Authorization: Bearer your_secret_password_for_this_service" \
+  -H "Authorization: Bearer your_secure_password_here" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "auto-chat",

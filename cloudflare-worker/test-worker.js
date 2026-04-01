@@ -1,6 +1,6 @@
 // 测试 Worker 端点
-const WORKER_URL = 'https://codebuddy-worker.iclaw.workers.dev';
-const API_KEY = 'sk-U8FtQmChp-api-key';
+const WORKER_URL = 'https://your-worker.workers.dev';
+const API_KEY = 'your-api-key-here';
 
 async function testEndpoint(name, url, options = {}) {
   console.log(`\n=== 测试: ${name} ===`);

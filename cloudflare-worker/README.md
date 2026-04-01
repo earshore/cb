@@ -62,11 +62,11 @@ kv_namespaces = [
 ```bash
 # 设置 Web 访问密码
 wrangler secret put WEB_PASSWORD
-# 输入: admin123cb
+# 输入你的密码
 
 # 设置 API 调用密钥
 wrangler secret put API_KEY
-# 输入: sk-U8FtQmChp-api-key
+# 输入你的 API key
 ```
 
 如果使用 secrets，需要从 `wrangler.toml` 的 `[vars]` 部分删除对应的变量。
@@ -96,7 +96,7 @@ npm run deploy
 3. 选择你的 Worker (`codebuddy-worker`)
 4. 点击 "Settings" -> "Triggers" -> "Custom Domains"
 5. 点击 "Add Custom Domain"
-6. 输入 `cbapi.hongecb.store`
+6. 输入你的域名（例如：`api.yourdomain.com`）
 7. Cloudflare 会自动创建 DNS 记录
 
 #### 方法 2: 通过 wrangler.toml
@@ -105,7 +105,7 @@ npm run deploy
 
 ```toml
 routes = [
-  { pattern = "cbapi.hongecb.store/*", zone_name = "hongecb.store" }
+  { pattern = "api.yourdomain.com/*", zone_name = "yourdomain.com" }
 ]
 ```
 
@@ -118,8 +118,8 @@ npm run deploy
 
 #### 方法 1: 通过 Web 界面（推荐）
 
-1. 访问 `https://cbapi.hongecb.store/`
-2. 输入密码 `admin123cb` 登录
+1. 访问 `https://your-domain.com/` 或 `https://your-worker.workers.dev/`
+2. 输入你设置的密码登录
 3. 进入"凭证管理"标签
 4. 点击"添加凭证"或使用"自动获取认证"
 
@@ -141,15 +141,15 @@ wrangler kv:key put --binding=CREDENTIALS_KV "cred:user1_1234567890" '{
 所有 API 请求需要在 Authorization header 中提供 API key：
 
 ```
-Authorization: Bearer sk-U8FtQmChp-api-key
+Authorization: Bearer your-api-key-here
 ```
 
 ### 聊天完成 API
 
 ```bash
 # 非流式请求
-curl -X POST "https://cbapi.hongecb.store/v1/chat/completions" \
-  -H "Authorization: Bearer sk-U8FtQmChp-api-key" \
+curl -X POST "https://your-domain.com/v1/chat/completions" \
+  -H "Authorization: Bearer your-api-key-here" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "auto-chat",
@@ -157,8 +157,8 @@ curl -X POST "https://cbapi.hongecb.store/v1/chat/completions" \
   }'
 
 # 流式请求
-curl -X POST "https://cbapi.hongecb.store/v1/chat/completions" \
-  -H "Authorization: Bearer sk-U8FtQmChp-api-key" \
+curl -X POST "https://your-domain.com/v1/chat/completions" \
+  -H "Authorization: Bearer your-api-key-here" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "auto-chat",
@@ -170,8 +170,8 @@ curl -X POST "https://cbapi.hongecb.store/v1/chat/completions" \
 ### 获取模型列表
 
 ```bash
-curl "https://cbapi.hongecb.store/v1/models" \
-  -H "Authorization: Bearer sk-U8FtQmChp-api-key"
+curl "https://your-domain.com/v1/models" \
+  -H "Authorization: Bearer your-api-key-here"
 ```
 
 ### Python 客户端示例
@@ -180,8 +180,8 @@ curl "https://cbapi.hongecb.store/v1/models" \
 import openai
 
 client = openai.OpenAI(
-    api_key="sk-U8FtQmChp-api-key",
-    base_url="https://cbapi.hongecb.store/v1"
+    api_key="your-api-key-here",
+    base_url="https://your-domain.com/v1"
 )
 
 response = client.chat.completions.create(
@@ -200,11 +200,11 @@ print(response.choices[0].message.content)
 
 | 变量名 | 默认值 | 说明 |
 |--------|--------|------|
-| `WEB_PASSWORD` | `admin123cb` | Web 管理界面访问密码 |
-| `API_KEY` | `sk-U8FtQmChp-api-key` | API 调用认证密钥 |
+| `WEB_PASSWORD` | - | Web 管理界面访问密码（必需） |
+| `API_KEY` | - | API 调用认证密钥（必需） |
 | `CODEBUDDY_API_ENDPOINT` | `https://www.codebuddy.ai` | CodeBuddy API 端点 |
 | `ROTATION_COUNT` | `1` | 凭证轮换频率（每 N 次请求轮换一次） |
-| `MODELS` | `claude-4.0,claude-3.7,...` | 可用模型列表 |
+| `MODELS` | `auto-chat,gpt-5,...` | 可用模型列表 |
 
 ### KV 存储优化
 

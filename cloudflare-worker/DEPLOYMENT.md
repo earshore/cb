@@ -1,85 +1,117 @@
-# 🎉 CodeBuddy Worker 部署完成！
+# CodeBuddy Worker 部署指南
 
-## ✅ 部署信息
+## 环境变量配置
 
-- **Worker 名称**: codebuddy-worker
-- **访问地址**: https://codebuddy-worker.iclaw.workers.dev
-- **Web 管理界面**: https://codebuddy-worker.iclaw.workers.dev
-- **部署时间**: 2026-03-31
-- **版本 ID**: 77ec8dc1-c42c-4795-bf72-337843b6f096
+本项目使用 Cloudflare Workers Secrets 来安全存储敏感信息。
 
-## 🔑 认证信息
-
-- **API Key**: `sk-U8FtQmChp-api-key`
-- **Web 密码**: `admin123cb`
-
-## 📝 下一步操作
-
-### 1. 访问 Web 管理界面
-
-打开浏览器访问：https://codebuddy-worker.iclaw.workers.dev
-
-输入密码：`admin123cb`
-
-### 2. 添加 CodeBuddy 凭证
-
-在 Web 管理界面中：
-
-1. 进入"凭证管理"标签
-2. 点击"添加凭证"按钮
-3. 填入你的 CodeBuddy Token 和用户 ID
-4. 点击"保存"
-
-或者使用命令行：
+### 1. 复制环境变量示例文件
 
 ```bash
-cd "D:\Users\Administrator\Documents\GitHub\cb\cloudflare-worker"
-
-# 方法 1: 使用 wrangler CLI（推荐）
-npx wrangler kv key put --binding=CREDENTIALS_KV "cred:mytoken_$(date +%s)" '{
-  "bearer_token": "你的CodeBuddy_Token",
-  "user_id": "你的用户ID",
-  "created_at": '$(date +%s)',
-  "expires_in": 2592000
-}'
-
-# 方法 2: 使用 API
-curl -X POST "https://codebuddy-worker.iclaw.workers.dev/v1/credentials" \
-  -H "Authorization: Bearer admin123cb" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "bearer_token": "你的CodeBuddy_Token",
-    "user_id": "你的用户ID"
-  }'
+cp .env.example .env
 ```
 
-### 2. 测试 API
+### 2. 编辑 .env 文件
 
-添加凭证后，测试 API 是否正常工作：
+填入你的实际配置值：
+
+```env
+# Web 管理界面密码（必填）
+WEB_PASSWORD=your_secure_password_here
+
+# API 访问密钥（必填）
+API_KEY=sk-your-api-key-here
+
+# CodeBuddy API 端点（可选）
+CODEBUDDY_API_ENDPOINT=https://www.codebuddy.ai
+
+# 凭证轮换次数（可选）
+ROTATION_COUNT=1
+
+# 可用模型列表（可选）
+MODELS=auto-chat,gpt-5,gpt-5-mini,gpt-5-nano
+```
+
+### 3. 设置 Cloudflare Workers Secrets
+
+**重要：** 敏感信息（密码、密钥）必须使用 secrets 存储，不要直接写在 `wrangler.toml` 中。
 
 ```bash
-# 测试聊天接口
-curl -X POST "https://codebuddy-worker.iclaw.workers.dev/v1/chat/completions" \
-  -H "Authorization: Bearer sk-U8FtQmChp-api-key" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "model": "auto-chat",
-    "messages": [{"role": "user", "content": "你好"}]
-  }'
+# 设置 Web 管理界面密码
+npx wrangler secret put WEB_PASSWORD
+
+# 设置 API 访问密钥
+npx wrangler secret put API_KEY
 ```
 
-### 3. 查看实时日志
+运行命令后，会提示你输入对应的值。
+
+### 4. 创建 KV 命名空间
 
 ```bash
-cd "D:\Users\Administrator\Documents\GitHub\cb\cloudflare-worker"
-npx wrangler tail
+# 创建 KV 命名空间
+npx wrangler kv namespace create CREDENTIALS_KV
+
+# 将返回的 ID 填入 wrangler.toml 的 kv_namespaces.id 字段
 ```
 
-## 📚 文档
+### 5. 部署 Worker
 
-- **快速开始**: `QUICKSTART.md`
-- **完整文档**: `README.md`
-- **项目目录**: `D:\Users\Administrator\Documents\GitHub\cb\cloudflare-worker`
+```bash
+npx wrangler deploy
+```
+
+## 环境变量说明
+
+| 变量名 | 必填 | 说明 | 默认值 |
+|--------|------|------|--------|
+| `WEB_PASSWORD` | ✅ | Web 管理界面登录密码 | - |
+| `API_KEY` | ✅ | API 访问密钥，用于 OpenAI 兼容接口认证 | - |
+| `CODEBUDDY_API_ENDPOINT` | ❌ | CodeBuddy API 端点地址 | `https://www.codebuddy.ai` |
+| `ROTATION_COUNT` | ❌ | 凭证自动轮换次数（每使用 N 次后切换） | `1` |
+| `MODELS` | ❌ | 可用模型列表（逗号分隔） | 见 `.env.example` |
+
+## 安全建议
+
+1. **永远不要**将 `WEB_PASSWORD` 和 `API_KEY` 提交到 Git 仓库
+2. 使用 `wrangler secret` 命令设置敏感信息
+3. `.env` 文件已添加到 `.gitignore`，确保不会被提交
+4. 定期更换密码和密钥
+5. 使用强密码（至少 12 位，包含大小写字母、数字和特殊字符）
+
+## 更新 Secrets
+
+如需更新已设置的 secret：
+
+```bash
+# 更新密码
+npx wrangler secret put WEB_PASSWORD
+
+# 更新 API Key
+npx wrangler secret put API_KEY
+```
+
+## 查看已设置的 Secrets
+
+```bash
+npx wrangler secret list
+```
+
+## 删除 Secrets
+
+```bash
+npx wrangler secret delete WEB_PASSWORD
+npx wrangler secret delete API_KEY
+```
+
+## 访问管理界面
+
+部署完成后，访问你的 Worker URL：
+
+```
+https://your-worker.workers.dev
+```
+
+使用 `WEB_PASSWORD` 中设置的密码登录。
 
 ## 🌐 API 端点
 
@@ -115,38 +147,7 @@ npx wrangler deploy
 
 # 查看部署历史
 npx wrangler deployments list
+
+# 查看实时日志
+npx wrangler tail
 ```
-
-## ⚙️ 配置说明
-
-当前配置（在 `wrangler.toml` 中）：
-
-- **ROTATION_COUNT**: 1（每次请求轮换凭证）
-- **MODELS**: claude-4.0, claude-3.7, gpt-5, gpt-5-mini, gpt-5-nano, o4-mini, gemini-2.5-flash, gemini-2.5-pro, auto-chat
-- **KV Namespace ID**: 17788b064bd4411c99333f7976d55fbe
-
-## 🚨 注意事项
-
-1. **凭证管理**: 请妥善保管你的 CodeBuddy Token，不要泄露
-2. **API Key**: 建议定期更换 API Key 和 Web 密码
-3. **KV 限额**: 免费版每天 1,000 次写入，已优化为每 100 次请求才写入一次状态
-4. **过期检查**: 系统会自动跳过过期的凭证
-5. **自定义域名**: 如需绑定自定义域名，请在 Cloudflare Dashboard 中配置
-
-## 🔗 相关链接
-
-- **Worker Dashboard**: https://dash.cloudflare.com/
-- **Worker URL**: https://codebuddy-worker.iclaw.workers.dev
-- **GitHub**: https://github.com/xueyue33/codebuddy2api
-
-## 📞 支持
-
-如遇到问题：
-
-1. 查看实时日志：`npx wrangler tail`
-2. 检查凭证状态：访问 `/v1/credentials`
-3. 查看完整文档：`README.md`
-
----
-
-**部署成功！现在你可以开始使用 CodeBuddy Worker 了！** 🚀
