@@ -168,5 +168,8 @@ logs/
 *.backup
 .claude/settings.local.json
 
+# Node.js dependencies
+node_modules/
 
-node_modules/PROJECT_CLEANUP_SUMMARY.md
+# Project cleanup summary (contains sensitive info history)
+PROJECT_CLEANUP_SUMMARY.md
