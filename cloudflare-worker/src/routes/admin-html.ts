@@ -1171,6 +1171,22 @@ export const adminHTML = `<!DOCTYPE html>
             margin-left: 0.5rem;
             font-weight: 600;
         }
+
+        .credential-disabled-badge {
+            display: inline-block;
+            background: var(--secondary-color);
+            color: white;
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            margin-left: 0.5rem;
+            font-weight: 600;
+        }
+
+        .credential-avatar.disabled {
+            background: var(--secondary-color);
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -1464,7 +1480,7 @@ export const adminHTML = `<!DOCTYPE html>
                             <div>加载当前状态...</div>
                         </div>
                     </div>
-                    
+
                     <div id="credentialsList" class="loading">
                         <i class="fas fa-spinner fa-spin"></i>
                         <div>加载中...</div>
@@ -1593,19 +1609,28 @@ export const adminHTML = `<!DOCTYPE html>
                         </button>
                     </div>
 
-                    <!-- 修改 API Key -->
+                    <!-- API Key 管理 -->
                     <div>
-                        <h4 style="margin-bottom: 1rem; color: var(--primary-color);">修改 API Key</h4>
-                        <div class="form-group">
-                            <label class="form-label" for="newApiKey">新 API Key</label>
-                            <input type="text" id="newApiKey" class="form-input" placeholder="输入新的 API Key（格式：sk-xxx）">
+                        <h4 style="margin-bottom: 1rem; color: var(--primary-color);">API Key 管理</h4>
+
+                        <!-- API Key 列表 -->
+                        <div id="apiKeysList" style="margin-bottom: 1.5rem;">
+                            <div style="text-align: center; padding: 2rem; color: var(--secondary-color);">
+                                加载中...
+                            </div>
                         </div>
-                        <button class="btn btn-primary" onclick="changeApiKey()">
-                            <i class="fas fa-key"></i> 修改 API Key
-                        </button>
-                        <small style="display: block; margin-top: 1rem; color: var(--secondary-color);">
-                            注意：修改后需要使用新的 API Key 进行 API 调用。
-                        </small>
+
+                        <!-- 添加新 API Key -->
+                        <div style="border-top: 1px solid var(--border-color); padding-top: 1.5rem;">
+                            <h5 style="margin-bottom: 1rem;">添加新 API Key</h5>
+                            <div class="form-group">
+                                <label class="form-label" for="newApiKey">API Key</label>
+                                <input type="text" id="newApiKey" class="form-input" placeholder="输入新的 API Key（格式：sk-xxx）">
+                            </div>
+                            <button class="btn btn-primary" onclick="addApiKey()">
+                                <i class="fas fa-plus"></i> 添加 API Key
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1816,6 +1841,7 @@ export const adminHTML = `<!DOCTYPE html>
                 loadModels();
             } else if (tabId === 'settings') {
                 loadSettings();
+                loadApiKeys();
             }
         }
 
@@ -2104,12 +2130,12 @@ export const adminHTML = `<!DOCTYPE html>
         async function loadCredentials() {
             const credentialsList = document.getElementById('credentialsList');
             credentialsList.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i><div>加载中...</div></div>';
-            
+
             try {
-                const response = await fetch('/codebuddy/v1/credentials', { 
-                    headers: getAuthHeaders() 
+                const response = await fetch('/codebuddy/v1/credentials', {
+                    headers: getAuthHeaders()
                 });
-                
+
                 if (response.ok) {
                     const data = await response.json();
                     // 初始化凭证缓存
@@ -2164,7 +2190,7 @@ export const adminHTML = `<!DOCTYPE html>
                             <i class="\${statusIcon}"></i> 手动选择模式
                         </div>
                         <div style="margin-top: 0.5rem; font-size: 0.9rem;">
-                            当前使用: <strong>\${data.filename}</strong> (凭证 #\${data.index + 1})
+                            当前使用: <strong>\${data.user_id || 'unknown'}</strong> (凭证 #\${data.index + 1})
                             \${data.user_id !== 'unknown' ? \`<br>用户ID: \${data.user_id}\` : ''}
                         </div>
                     \`;
@@ -2177,7 +2203,7 @@ export const adminHTML = `<!DOCTYPE html>
                             <i class="\${statusIcon}"></i> 自动轮换已关闭
                         </div>
                         <div style="margin-top: 0.5rem; font-size: 0.9rem;">
-                            固定使用: <strong>\${data.filename}</strong> (凭证 #\${data.index + 1})
+                            固定使用: <strong>\${data.user_id || 'unknown'}</strong> (凭证 #\${data.index + 1})
                             <br>轮换次数: \${data.rotation_count}
                             \${data.user_id !== 'unknown' ? \`<br>用户ID: \${data.user_id}\` : ''}
                         </div>
@@ -2191,7 +2217,7 @@ export const adminHTML = `<!DOCTYPE html>
                             <i class="\${statusIcon}"></i> 轮换次数为0
                         </div>
                         <div style="margin-top: 0.5rem; font-size: 0.9rem;">
-                            固定使用: <strong>\${data.filename}</strong> (凭证 #\${data.index + 1})
+                            固定使用: <strong>\${data.user_id || 'unknown'}</strong> (凭证 #\${data.index + 1})
                             <br>轮换次数设为0，不进行轮换
                             \${data.user_id !== 'unknown' ? \`<br>用户ID: \${data.user_id}\` : ''}
                         </div>
@@ -2205,7 +2231,7 @@ export const adminHTML = `<!DOCTYPE html>
                             <i class="\${statusIcon}"></i> 自动轮换模式
                         </div>
                         <div style="margin-top: 0.5rem; font-size: 0.9rem;">
-                            当前使用: <strong>\${data.filename}</strong> (凭证 #\${data.index + 1})
+                            当前使用: <strong>\${data.user_id || 'unknown'}</strong> (凭证 #\${data.index + 1})
                             <br>使用次数: \${data.usage_count}/\${data.rotation_count}
                             \${data.user_id !== 'unknown' ? \`<br>用户ID: \${data.user_id}\` : ''}
                         </div>
@@ -2286,7 +2312,10 @@ export const adminHTML = `<!DOCTYPE html>
                         // 确定凭证状态和头像样式
                         let avatarClass = 'unknown';
                         let avatarText = '?';
-                        if (cred.is_expired) {
+                        if (cred.disabled) {
+                            avatarClass = 'disabled';
+                            avatarText = '✕';
+                        } else if (cred.is_expired) {
                             avatarClass = 'expired';
                             avatarText = '!';
                         } else if (cred.status === 'valid') {
@@ -2298,6 +2327,7 @@ export const adminHTML = `<!DOCTYPE html>
                         const isSelected = index === currentSelectedIndex;
                         const selectedClass = isSelected ? ' credential-item-selected' : '';
                         const selectedBadge = isSelected ? '<span class="credential-selected-badge">当前使用</span>' : '';
+                        const disabledBadge = cred.disabled ? '<span class="credential-disabled-badge">已禁用</span>' : '';
 
                         // 格式化时间信息
                         const expiryInfo = cred.expires_at ? new Date(cred.expires_at * 1000).toLocaleDateString() : '永不过期';
@@ -2310,6 +2340,7 @@ export const adminHTML = `<!DOCTYPE html>
                                     <div class="credential-header">
                                         <div class="credential-title">凭证 #\${index + 1}</div>
                                         \${selectedBadge}
+                                        \${disabledBadge}
                                     </div>
                                     <div class="credential-meta">
                                         \${cred.user_id && cred.user_id !== 'unknown' ? 
@@ -2331,13 +2362,16 @@ export const adminHTML = `<!DOCTYPE html>
                                     </div>
                                 </div>
                                 <div class="credential-actions">
-                                    \${!isSelected ? 
+                                    <button class="btn \${cred.disabled ? 'btn-success' : 'btn-secondary'}" onclick="toggleCredentialDisabled(\${index})" title="\${cred.disabled ? '启用凭证' : '禁用凭证'}">
+                                        <i class="fas fa-\${cred.disabled ? 'check' : 'ban'}"></i>
+                                    </button>
+                                    \${!isSelected && !cred.disabled ?
                                         \`<button class="btn btn-primary" onclick="selectCredential(\${index})" title="选择此凭证">
                                             <i class="fas fa-hand-pointer"></i>
                                         </button>\` : ''
                                     }
-                                    <button class="btn btn-success" onclick="testCredential(\${index})" title="测试凭证">
-                                        <i class="fas fa-check"></i>
+                                    <button class="btn btn-warning" onclick="testCredential(\${index})" title="测试凭证">
+                                        <i class="fas fa-link"></i>
                                     </button>
                                     <button class="btn btn-danger" onclick="deleteCredential(\${index})" title="删除凭证">
                                         <i class="fas fa-trash"></i>
@@ -2390,11 +2424,16 @@ export const adminHTML = `<!DOCTYPE html>
                             </div>
                         </div>
                         <div class="credential-actions">
-                            <button class="btn btn-warning" onclick="selectCredential(\${index})" title="手动选择此凭证">
-                                <i class="fas fa-hand-pointer"></i> 选择
+                            <button class="btn \${cred.disabled ? 'btn-success' : 'btn-secondary'}" onclick="toggleCredentialDisabled(\${index})" title="\${cred.disabled ? '启用凭证' : '禁用凭证'}">
+                                <i class="fas fa-\${cred.disabled ? 'check' : 'ban'}"></i>
                             </button>
-                            <button class="btn btn-success" onclick="testCredential(\${index})">
-                                <i class="fas fa-check"></i> 测试
+                            \${!cred.disabled ?
+                                \`<button class="btn btn-primary" onclick="selectCredential(\${index})" title="手动选择此凭证">
+                                    <i class="fas fa-hand-pointer"></i> 选择
+                                </button>\` : ''
+                            }
+                            <button class="btn btn-warning" onclick="testCredential(\${index})">
+                                <i class="fas fa-link"></i> 测试
                             </button>
                         </div>
                     </div>
@@ -2421,6 +2460,27 @@ export const adminHTML = `<!DOCTYPE html>
                 }
             } catch (error) {
                 showNotification(\`删除失败: \${error.message}\`, 'error');
+            }
+        }
+
+        async function toggleCredentialDisabled(index) {
+            try {
+                const response = await fetch('/codebuddy/v1/credentials/toggle-disabled', {
+                    method: 'POST',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify({ index })
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    showNotification(data.message || '操作成功', 'success');
+                    await loadCredentials();
+                    await loadCurrentCredentialStatus();
+                } else {
+                    const err = await response.json();
+                    showNotification(\`操作失败: \${err.error || response.status}\`, 'error');
+                }
+            } catch (error) {
+                showNotification(\`操作失败: \${error.message}\`, 'error');
             }
         }
 
@@ -3199,41 +3259,146 @@ export const adminHTML = `<!DOCTYPE html>
             }
         }
 
-        // 修改 API Key
-        async function changeApiKey() {
-            const newApiKey = document.getElementById('newApiKey').value;
+        // API Key 管理
+        async function loadApiKeys() {
+            try {
+                const response = await fetch('/api/api-keys', {
+                    method: 'GET',
+                    headers: getAuthHeaders()
+                });
 
-            if (!newApiKey) {
-                showNotification('请输入新的 API Key', 'error');
+                if (!response.ok) {
+                    throw new Error('Failed to load API keys');
+                }
+
+                const data = await response.json();
+                displayApiKeys(data.keys || []);
+            } catch (error) {
+                console.error('Load API keys error:', error);
+                document.getElementById('apiKeysList').innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--error-color);">加载失败</div>';
+            }
+        }
+
+        function displayApiKeys(keys) {
+            const container = document.getElementById('apiKeysList');
+
+            if (keys.length === 0) {
+                container.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--secondary-color);">暂无 API Key</div>';
                 return;
             }
 
-            if (!newApiKey.startsWith('sk-') || newApiKey.length < 10) {
+            let html = '';
+
+            keys.forEach(key => {
+                const maskedKey = key.key.substring(0, 7) + '****' + key.key.substring(key.key.length - 4);
+                const isDefault = key.is_default || false;
+
+                html += \`
+                    <div class="credential-item">
+                        <div class="credential-avatar valid">
+                            <i class="fas fa-key"></i>
+                        </div>
+                        <div class="credential-info">
+                            <div class="credential-header">
+                                <div class="credential-title" style="font-family: 'Courier New', monospace; letter-spacing: 0.5px;">\${maskedKey}</div>
+                                \${isDefault ? '<span class="credential-selected-badge">默认</span>' : ''}
+                            </div>
+                            <div class="credential-meta">
+                                <span><i class="fas fa-clock"></i> \${new Date(key.created_at).toLocaleString()}</span>
+                            </div>
+                        </div>
+                        <div class="credential-actions">
+                            <button class="btn btn-secondary" onclick="copyApiKey('\${key.key}')" title="复制">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                            \${!isDefault ? \`
+                                <button class="btn btn-danger" onclick="deleteApiKey('\${key.id}')" title="删除">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            \` : ''}
+                        </div>
+                    </div>
+                \`;
+            });
+
+            container.innerHTML = html;
+        }
+
+        async function addApiKey() {
+            const apiKey = document.getElementById('newApiKey').value.trim();
+
+            if (!apiKey) {
+                showNotification('请输入 API Key', 'error');
+                return;
+            }
+
+            if (!apiKey.startsWith('sk-') || apiKey.length < 10) {
                 showNotification('API Key 格式不正确（必须以 sk- 开头且至少10位）', 'error');
                 return;
             }
 
-            showNotification('正在修改 API Key...', 'info');
+            showNotification('正在添加 API Key...', 'info');
 
             try {
-                const response = await fetch('/api/change-api-key', {
+                const response = await fetch('/api/api-keys', {
                     method: 'POST',
                     headers: getAuthHeaders(),
-                    body: JSON.stringify({ new_api_key: newApiKey })
+                    body: JSON.stringify({ api_key: apiKey })
                 });
 
                 const result = await response.json();
 
                 if (response.ok) {
-                    showNotification('API Key 修改成功！', 'success');
-                    // 清空表单
+                    showNotification('API Key 添加成功！', 'success');
                     document.getElementById('newApiKey').value = '';
+                    await loadApiKeys();
                 } else {
-                    showNotification(result.error?.message || 'API Key 修改失败', 'error');
+                    showNotification(result.error?.message || 'API Key 添加失败', 'error');
                 }
             } catch (error) {
-                showNotification(\`修改失败: \${error.message}\`, 'error');
+                showNotification(\`添加失败: \${error.message}\`, 'error');
             }
+        }
+
+        async function deleteApiKey(keyId) {
+            if (!confirm('确定要删除此 API Key 吗？')) {
+                return;
+            }
+
+            showNotification('正在删除 API Key...', 'info');
+
+            try {
+                const response = await fetch('/api/api-keys', {
+                    method: 'DELETE',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify({ key_id: keyId })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showNotification('API Key 删除成功！', 'success');
+                    await loadApiKeys();
+                } else {
+                    showNotification(result.error?.message || 'API Key 删除失败', 'error');
+                }
+            } catch (error) {
+                showNotification(\`删除失败: \${error.message}\`, 'error');
+            }
+        }
+
+        function copyApiKey(key) {
+            navigator.clipboard.writeText(key).then(() => {
+                showNotification('API Key 已复制到剪贴板', 'success');
+            }).catch(err => {
+                showNotification('复制失败', 'error');
+            });
+        }
+
+
+        // 修改 API Key (保留旧函数以兼容)
+        async function changeApiKey() {
+            await addApiKey();
         }
 
        function updateUsageTables(stats) {

@@ -140,10 +140,10 @@ export class CredentialManager {
       return null
     }
 
-    // 过滤掉过期的凭证
+    // 过滤掉过期的和被禁用的凭证
     const validCredentials = this.credentials
       .map((cred, index) => ({ cred, index }))
-      .filter(({ cred }) => !this.isTokenExpired(cred))
+      .filter(({ cred }) => !this.isTokenExpired(cred) && !cred.disabled)
 
     if (validCredentials.length === 0) {
       console.error('No valid (non-expired) credentials available')
@@ -238,7 +238,8 @@ export class CredentialManager {
         time_remaining: timeRemaining,
         is_expired: isExpired,
         token_type: cred.token_type || 'Bearer',
-        has_refresh_token: !!cred.refresh_token
+        has_refresh_token: !!cred.refresh_token,
+        disabled: cred.disabled || false
       }
     })
   }
@@ -378,6 +379,37 @@ export class CredentialManager {
         rotation_count: rotationCount,
         auto_rotation_enabled: true
       }
+    }
+  }
+
+  /**
+   * 切换凭证的禁用状态
+   */
+  async toggleCredentialDisabled(index: number): Promise<boolean> {
+    await this.initialize()
+
+    if (index < 0 || index >= this.credentials.length) {
+      return false
+    }
+
+    try {
+      const credential = this.credentials[index]
+      credential.disabled = !credential.disabled
+
+      // 找到对应的 KV key 并更新
+      const list = await this.env.CREDENTIALS_KV.list({ prefix: 'cred:' })
+      if (index < list.keys.length) {
+        await this.env.CREDENTIALS_KV.put(list.keys[index].name, JSON.stringify(credential))
+        console.log(`Toggled credential at index ${index}, disabled: ${credential.disabled}`)
+
+        // 重新加载凭证列表
+        await this.loadAllCredentials()
+        return true
+      }
+      return false
+    } catch (error) {
+      console.error('Failed to toggle credential disabled state:', error)
+      return false
     }
   }
 }

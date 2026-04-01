@@ -12,13 +12,14 @@ import {
   resumeAutoRotation,
   toggleAutoRotation,
   getCurrentCredential,
-  validateCredential
+  validateCredential,
+  toggleCredentialDisabled
 } from './routes/credentials'
 import { getAdminPage } from './routes/admin'
 import { startAuth, pollAuth, authCallback } from './routes/auth'
 import { getSettings, updateSettings } from './routes/settings'
 import { getStats } from './routes/stats'
-import { changePassword, changeApiKey } from './routes/password'
+import { changePassword, changeApiKey, listApiKeys, addApiKey, deleteApiKey } from './routes/password'
 
 const app = new Hono<{ Bindings: Env }>()
 
@@ -98,6 +99,7 @@ app.post('/v1/credentials/auto', authenticate, resumeAutoRotation)
 app.post('/v1/credentials/toggle-rotation', authenticate, toggleAutoRotation)
 app.get('/v1/credentials/current', authenticate, getCurrentCredential)
 app.post('/v1/credentials/validate', authenticate, validateCredential)
+app.post('/v1/credentials/toggle-disabled', authenticate, toggleCredentialDisabled)
 
 // 兼容原有路径（带 /codebuddy 前缀）
 app.get('/codebuddy/v1/credentials', authenticate, listCredentials)
@@ -108,6 +110,7 @@ app.post('/codebuddy/v1/credentials/auto', authenticate, resumeAutoRotation)
 app.post('/codebuddy/v1/credentials/toggle-rotation', authenticate, toggleAutoRotation)
 app.get('/codebuddy/v1/credentials/current', authenticate, getCurrentCredential)
 app.post('/codebuddy/v1/credentials/validate', authenticate, validateCredential)
+app.post('/codebuddy/v1/credentials/toggle-disabled', authenticate, toggleCredentialDisabled)
 
 // OAuth 认证路由
 app.get('/codebuddy/auth/start', startAuth)
@@ -124,6 +127,9 @@ app.get('/api/stats', authenticate, getStats)
 // 密码管理路由
 app.post('/api/change-password', authenticate, changePassword)
 app.post('/api/change-api-key', authenticate, changeApiKey)
+app.get('/api/api-keys', authenticate, listApiKeys)
+app.post('/api/api-keys', authenticate, addApiKey)
+app.delete('/api/api-keys', authenticate, deleteApiKey)
 
 // 404 处理 - 返回标准的 OpenAI 错误格式
 app.notFound((c) => {

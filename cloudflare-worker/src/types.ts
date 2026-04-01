@@ -27,6 +27,7 @@ export interface Credential {
   scope?: string
   domain?: string
   session_state?: string
+  disabled?: boolean
 }
 
 /**

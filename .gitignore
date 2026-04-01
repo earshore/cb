@@ -167,3 +167,6 @@ logs/
 *.bak
 *.backup
 .claude/settings.local.json
+
+
+node_modules/

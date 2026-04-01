@@ -80,7 +80,20 @@ export async function authenticate(c: Context<{ Bindings: Env }>, next: () => Pr
     const isValidWebPassword = auth === `Bearer ${expectedWebPassword}`
     const isValidApiKey = auth === `Bearer ${expectedApiKey}`
 
+    // 检查是否匹配任何自定义 API key
+    let isValidCustomApiKey = false
     if (!isValidWebPassword && !isValidApiKey) {
+      const list = await c.env.CREDENTIALS_KV.list({ prefix: 'config:api_key:' })
+      for (const item of list.keys) {
+        const key = await c.env.CREDENTIALS_KV.get(item.name)
+        if (key && auth === `Bearer ${key}`) {
+          isValidCustomApiKey = true
+          break
+        }
+      }
+    }
+
+    if (!isValidWebPassword && !isValidApiKey && !isValidCustomApiKey) {
       return c.json({
         error: {
           message: 'Incorrect API key provided',

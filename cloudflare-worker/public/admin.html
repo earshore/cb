@@ -2160,8 +2160,7 @@
                             <i class="${statusIcon}"></i> 手动选择模式
                         </div>
                         <div style="margin-top: 0.5rem; font-size: 0.9rem;">
-                            当前使用: <strong>${data.filename}</strong> (凭证 #${data.index + 1})
-                            ${data.user_id !== 'unknown' ? `<br>用户ID: ${data.user_id}` : ''}
+                            当前使用: <strong>${data.user_id || 'unknown'}</strong> (凭证 #${data.index + 1})
                         </div>
                     `;
                     break;
@@ -2173,9 +2172,8 @@
                             <i class="${statusIcon}"></i> 自动轮换已关闭
                         </div>
                         <div style="margin-top: 0.5rem; font-size: 0.9rem;">
-                            固定使用: <strong>${data.filename}</strong> (凭证 #${data.index + 1})
+                            固定使用: <strong>${data.user_id || 'unknown'}</strong> (凭证 #${data.index + 1})
                             <br>轮换次数: ${data.rotation_count}
-                            ${data.user_id !== 'unknown' ? `<br>用户ID: ${data.user_id}` : ''}
                         </div>
                     `;
                     break;
@@ -2187,9 +2185,8 @@
                             <i class="${statusIcon}"></i> 轮换次数为0
                         </div>
                         <div style="margin-top: 0.5rem; font-size: 0.9rem;">
-                            固定使用: <strong>${data.filename}</strong> (凭证 #${data.index + 1})
+                            固定使用: <strong>${data.user_id || 'unknown'}</strong> (凭证 #${data.index + 1})
                             <br>轮换次数设为0，不进行轮换
-                            ${data.user_id !== 'unknown' ? `<br>用户ID: ${data.user_id}` : ''}
                         </div>
                     `;
                     break;
@@ -2201,9 +2198,8 @@
                             <i class="${statusIcon}"></i> 自动轮换模式
                         </div>
                         <div style="margin-top: 0.5rem; font-size: 0.9rem;">
-                            当前使用: <strong>${data.filename}</strong> (凭证 #${data.index + 1})
+                            当前使用: <strong>${data.user_id || 'unknown'}</strong> (凭证 #${data.index + 1})
                             <br>使用次数: ${data.usage_count}/${data.rotation_count}
-                            ${data.user_id !== 'unknown' ? `<br>用户ID: ${data.user_id}` : ''}
                         </div>
                     `;
                     break;

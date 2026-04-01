@@ -264,3 +264,36 @@ export async function validateCredential(c: Context<{ Bindings: Env }>) {
     }, 500)
   }
 }
+
+/**
+ * 切换凭证禁用状态
+ */
+export async function toggleCredentialDisabled(c: Context<{ Bindings: Env }>) {
+  try {
+    const data = await c.req.json()
+    const index = data.index
+
+    if (index === undefined || typeof index !== 'number') {
+      return c.json({ error: 'index is required' }, 422)
+    }
+
+    const credentialManager = new CredentialManager(c.env)
+    const success = await credentialManager.toggleCredentialDisabled(index)
+
+    if (!success) {
+      return c.json({ error: 'Invalid index or failed to toggle credential' }, 400)
+    }
+
+    // 获取更新后的凭证状态
+    const credentials = await credentialManager.getAllCredentials()
+    const credential = credentials[index]
+
+    return c.json({
+      message: `Credential #${index + 1} ${credential.disabled ? 'disabled' : 'enabled'} successfully`,
+      disabled: credential.disabled
+    })
+  } catch (error: any) {
+    console.error('Toggle credential disabled error:', error)
+    return c.json({ error: 'Failed to toggle credential', message: error.message }, 500)
+  }
+}
